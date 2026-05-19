@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 import yt_dlp
 
 app = Flask(__name__)
@@ -9,15 +9,12 @@ def home():
 
 @app.route('/get_audio')
 def get_audio():
-    # ESP32'den gelen video ID'sini veya URL'sini alıyoruz
     video_id = request.args.get('video_id')
     if not video_id:
-        return jsonify({"error": "video_id parametresi eksik"}), 400
+        return "Hata: video_id eksik", 400
 
-    # YouTube URL'sini oluşturuyoruz
     youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
-    # Sadece ham ses linkini çözmek için yt_dlp ayarları
     ydl_opts = {
         'format': 'bestaudio/best',
         'noplaylist': True,
@@ -27,11 +24,12 @@ def get_audio():
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            # ESP32'nin doğrudan çalabileceği ham ses URL'si
             audio_url = info['url']
-            return jsonify({"audio_url": audio_url})
+            # JSON yerine direkt linki düz metin olarak gönderiyoruz
+            return str(audio_url) 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return str(e), 500
 
 if __name__ == '__main__':
+    # Bilgisayarının yerel ağdaki IP adresinden erişilebilmesi için:
     app.run(host='0.0.0.0', port=10000)
