@@ -31,5 +31,8 @@ def get_audio():
         return str(e), 500
 
 if __name__ == '__main__':
-    # Bilgisayarının yerel ağdaki IP adresinden erişilebilmesi için:
-    app.run(host='0.0.0.0', port=10000)
+    # Render, portu kendisi atar (PORT çevre değişkeninden alır).
+    # Bu yüzden portu dinamik yapmalıyız:
+    import os
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
