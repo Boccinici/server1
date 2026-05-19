@@ -16,25 +16,38 @@ def get_audio():
 
     youtube_url = f"https://www.youtube.com/watch?v={video_id}"
 
+    # Render IP engellerini aşmak için iOS ve Android taklit parametreleri eklendi.
+    # Format '140' olarak ayarlandı, bu M4A (AAC) ses akışıdır ve ESP32 donanımıyla tam uyumludur.
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': '140/bestaudio/best',
         'noplaylist': True,
         'quiet': True,
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
         'no_warnings': True,
-        'source_address': '0.0.0.0'
+        'source_address': '0.0.0.0',
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'android', 'web']
+            }
+        }
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            audio_url = info['url']
-            # ESP32'nin çözebilmesi için veriyi JSON formatında gönderiyoruz
+            audio_url = info.get('url')
+            
+            if not audio_url:
+                return jsonify({"error": "Ses akis URL'si alinmadi."}), 500
+                
             return jsonify({"audio_url": audio_url})
+            
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # Hata detayını yakala ve ESP32 ekranında gösterilmesi için temiz metne çevir
+        error_msg = str(e).split('\n')[0] # İlk satırı al (Ekran alanı için kısa tutmak adına)
+        return jsonify({"error": error_msg}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
